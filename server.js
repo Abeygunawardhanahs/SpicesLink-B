@@ -5,6 +5,16 @@ const cors = require('cors');
 
 const app = express();
 
+// *** IMPORTANT: Register all models at startup to avoid schema registration errors ***
+console.log('📦 Registering Mongoose models...');
+const Buyer = require('./models/Buyer');
+const Supplier = require('./models/Supplier'); 
+const Product = require('./models/Product');
+// Add other models here as you create them
+// const Order = require('./models/Order');
+// const Notification = require('./models/Notification');
+console.log('✅ All models registered successfully');
+
 // Enable CORS
 app.use(cors({
   origin: [
@@ -62,10 +72,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/ratings', ratingRoutes);
 
-// Legacy route support (if you want to keep backward compatibility)
-//const userRoutes = require('./routes/userRoutes');
-//app.use('/api/users', userRoutes);
-
 // Test route
 app.get('/test', (req, res) => {
   res.json({ 
@@ -74,18 +80,18 @@ app.get('/test', (req, res) => {
     availableRoutes: {
       buyers: '/api/buyers',
       suppliers: '/api/suppliers',
-      products: '/api/products',
-      legacy_users: '/api/users'
+      products: '/api/products'
     }
   });
 });
 
-// Health check route
+// Health check route with model registration check
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    registeredModels: mongoose.modelNames()
   });
 });
 
@@ -112,7 +118,8 @@ app.get('/api', (req, res) => {
         list: 'GET /api/products',
         create: 'POST /api/products (supplier auth required)',
         update: 'PUT /api/products/:id (supplier auth required)',
-        delete: 'DELETE /api/products/:id (supplier auth required)'
+        delete: 'DELETE /api/products/:id (supplier auth required)',
+        priceHistory: 'GET /api/products/:id/prices'
       }
     },
     authentication: {
@@ -154,6 +161,15 @@ app.use((err, req, res, next) => {
     });
   }
   
+  // Mongoose schema error (THIS IS THE KEY FIX)
+  if (err.name === 'MissingSchemaError') {
+    return res.status(500).json({
+      success: false,
+      message: 'Database schema error',
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    });
+  }
+  
   // Default error
   res.status(500).json({
     success: false,
@@ -179,13 +195,11 @@ app.use((req, res) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  //useNewUrlParser: true,
-  //useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGO_URI)
 .then(() => {
   console.log('✅ MongoDB connected successfully');
   console.log(`📊 Database: ${mongoose.connection.name}`);
+  console.log('📋 Registered models:', mongoose.modelNames());
   
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, '0.0.0.0', () => {
