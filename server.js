@@ -8,13 +8,13 @@ const app = express();
 // Enable CORS
 app.use(cors({
   origin: [
-    'http://localhost:3000',
+    'http://localhost:5000',
     'http://localhost:8081',
     'http://localhost:8082',
     'http://127.0.0.1:8081',
     'http://localhost:19006',
     // Allow any IP in 192.168.x.x range for development
-    /^http:\/\/192\.168\.\d+\.\d+:(3000|8081|8082|19006)$/,
+    /^http:\/\/192\.168\.\d+\.\d+:(5000|8081|8082|19006)$/,
     // Specific IPs if needed
     'http://192.168.0.100:8081',
     'http://192.168.1.91:8081',
@@ -187,7 +187,7 @@ mongoose.connect(process.env.MONGO_URI, {
   console.log('✅ MongoDB connected successfully');
   console.log(`📊 Database: ${mongoose.connection.name}`);
   
-  const PORT = process.env.PORT || 3001;
+  const PORT = process.env.PORT || 5000;
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
     console.log('🔗 Available endpoints:');
