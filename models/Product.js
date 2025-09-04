@@ -7,33 +7,49 @@ const productSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Product name cannot exceed 100 characters']
   },
-  description: {
-    type: String,
-    default: '',
-    maxlength: [500, 'Description cannot exceed 500 characters']
-  },
-  category: {
-    type: String,
-    default: 'Uncategorized',
-    enum: ['Spices', 'Herbs', 'Seeds', 'Powders', 'Whole Spices', 'Blends', 'Other', 'Uncategorized']
-  },
-  image: {
-    type: String,
-    default: null
-  },
-  // FIXED: Changed from 'User' reference to support both Buyer and Supplier
+  // description: {
+  //   type: String,
+  //   default: '',
+  //   maxlength: [500, 'Description cannot exceed 500 characters']
+  // },
+  // category: {
+  //   type: String,
+  //   default: 'Uncategorized',
+  //   enum: ['Spices', 'Herbs', 'Seeds', 'Powders', 'Whole Spices', 'Blends', 'Other', 'Uncategorized']
+  // },
+  // REMOVED: image field - no longer needed
+  
+  // User identification fields
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: [true, 'User ID is required'],
-    // Don't specify ref here since we have both Buyer and Supplier models
+    required: [true, 'User ID is required']
+  },
+  userName: {
+    type: String,
+    required: [true, 'User name is required'],
+    trim: true,
+    maxlength: [100, 'User name cannot exceed 100 characters']
+  },
+  shopName: {
+    type: String,
+    required: [true, 'Shop name is required'],
+    trim: true,
+    maxlength: [100, 'Shop name cannot exceed 100 characters']
+  },
+  location: {
+    type: String,
+    required: [true, 'Location is required'],
+    trim: true,
+    maxlength: [200, 'Location cannot exceed 200 characters']
   },
   userType: {
     type: String,
     required: [true, 'User type is required'],
     enum: ['Buyer', 'Supplier'],
-    default: 'Supplier'
+    default: 'Buyer'
   },
-  // Price History with enhanced structure matching your frontend
+  
+  // Price History with enhanced structure
   priceHistory: [{
     pricePer100g: {
       type: String,
@@ -48,8 +64,7 @@ const productSchema = new mongoose.Schema({
       default: Date.now
     },
     updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      // Dynamic ref - could be either Buyer or Supplier
+      type: mongoose.Schema.Types.ObjectId
     },
     reason: {
       type: String,
@@ -67,8 +82,10 @@ productSchema.index({ userId: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ 'priceHistory.date': -1 });
+productSchema.index({ location: 1 }); // New index for location-based queries
+productSchema.index({ shopName: 1 }); // New index for shop-based queries
 
-// Pre-save middleware - simplified without price tracking
+// Pre-save middleware
 productSchema.pre('save', async function(next) {
   next();
 });

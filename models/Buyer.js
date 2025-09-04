@@ -22,7 +22,6 @@ const buyerSchema = new mongoose.Schema({
     required: [true, 'Contact number is required'],
     validate: {
       validator: function(v) {
-        // Simple validation for 10 to 15 digits
         return /\d{10,15}/.test(v);
       },
       message: 'Contact number must be between 10 and 15 digits.'
@@ -46,6 +45,16 @@ const buyerSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: 6
   },
+
+  // --- NEW: Optional Bank Details ---
+  bankDetails: {
+    accountNumber: { type: String, default: null },
+    ifscCode: { type: String, default: null },
+    bankName: { type: String, default: null },
+    branch: { type: String, default: null },
+    addedAt: { type: Date, default: null }
+  },
+
   // --- Standard fields for user management ---
   lastLogin: {
     type: Date,
@@ -60,12 +69,10 @@ const buyerSchema = new mongoose.Schema({
     default: false
   }
 }, {
-  // Adds createdAt and updatedAt timestamps automatically
   timestamps: true
 });
 
-// FIXED: Index for faster queries - corrected field names
-//buyerSchema.index({ email: 1 });        // ← Changed from 'emailAddress' to 'email'
+// Indexes
 buyerSchema.index({ shopLocation: 1 });
 
 module.exports = mongoose.model('Buyer', buyerSchema);
