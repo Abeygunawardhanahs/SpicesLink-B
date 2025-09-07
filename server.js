@@ -10,6 +10,7 @@ console.log('📦 Registering Mongoose models...');
 const Buyer = require('./models/Buyer');
 const Supplier = require('./models/Supplier'); 
 const Product = require('./models/Product');
+const Reservation = require('./models/Reservation'); // NEW: Add Reservation model
 // Add other models here as you create them
 // const Order = require('./models/Order');
 // const Notification = require('./models/Notification');
@@ -62,6 +63,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
+const reservationRoutes = require('./routes/reservationRoutes'); // NEW: Add reservation routes
 
 // API Routes
 app.use('/api/buyers', buyerRoutes);
@@ -71,6 +73,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/reservations', reservationRoutes); // NEW: Add reservation API routes
 
 // Test route
 app.get('/test', (req, res) => {
@@ -80,7 +83,8 @@ app.get('/test', (req, res) => {
     availableRoutes: {
       buyers: '/api/buyers',
       suppliers: '/api/suppliers',
-      products: '/api/products'
+      products: '/api/products',
+      reservations: '/api/reservations' // NEW: Add to test route
     }
   });
 });
@@ -95,11 +99,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API info route
+// UPDATED: API info route with reservation endpoints
 app.get('/api', (req, res) => {
   res.json({
     message: 'Fresh Food Supply Chain API',
-    version: '2.0',
+    version: '2.1', // Updated version
     endpoints: {
       buyers: {
         register: 'POST /api/buyers/register',
@@ -120,11 +124,38 @@ app.get('/api', (req, res) => {
         update: 'PUT /api/products/:id (supplier auth required)',
         delete: 'DELETE /api/products/:id (supplier auth required)',
         priceHistory: 'GET /api/products/:id/prices'
+      },
+      // NEW: Reservation endpoints
+      reservations: {
+        create: 'POST /api/reservations',
+        supplierList: 'GET /api/reservations/supplier/:supplierId? (auth required)',
+        buyerList: 'GET /api/reservations/buyer (auth required)',
+        getByMobile: 'GET /api/reservations/public/:mobileNo',
+        getById: 'GET /api/reservations/:id',
+        updateStatus: 'PUT /api/reservations/:id/status (supplier auth required)',
+        delete: 'DELETE /api/reservations/:id (auth required)',
+        statistics: 'GET /api/reservations/stats/:supplierId? (auth required)'
       }
     },
     authentication: {
       type: 'Bearer Token',
-      header: 'Authorization: Bearer <token>'
+      header: 'Authorization: Bearer <token>',
+      userTypes: ['buyer', 'supplier'] // NEW: Updated auth info
+    },
+    // NEW: Features section
+    features: {
+      reservations: {
+        description: 'Complete reservation management system',
+        capabilities: [
+          'Create reservations without authentication',
+          'Track reservations by mobile number',
+          'Supplier can manage their reservations',
+          'Status updates with supplier responses',
+          'Payment method handling (advance/COD)',
+          'Bank details for advance payments',
+          'Statistics and analytics'
+        ]
+      }
     }
   });
 });
@@ -178,7 +209,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// UPDATED: 404 handler with reservation routes
 app.use((req, res) => {
   res.status(404).json({ 
     success: false,
@@ -187,6 +218,7 @@ app.use((req, res) => {
       '/api/buyers',
       '/api/suppliers', 
       '/api/products',
+      '/api/reservations', // NEW: Add reservation route
       '/test',
       '/health',
       '/api'
@@ -208,6 +240,7 @@ mongoose.connect(process.env.MONGO_URI)
     console.log(`   • Buyers: http://localhost:${PORT}/api/buyers`);
     console.log(`   • Suppliers: http://localhost:${PORT}/api/suppliers`);
     console.log(`   • Products: http://localhost:${PORT}/api/products`);
+    console.log(`   • Reservations: http://localhost:${PORT}/api/reservations`); // NEW: Add log
     console.log(`   • API Info: http://localhost:${PORT}/api`);
     console.log(`   • Health Check: http://localhost:${PORT}/health`);
   });

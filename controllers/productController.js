@@ -239,9 +239,36 @@ const getProductWithHistory = async (req, res) => {
   }
 };
 
+// Get products by buyer ID
+const getProductsByBuyer = async (req, res) => {
+  try {
+    const { buyerId } = req.params;
+    console.log('Fetching products for buyerId:', buyerId);
+
+    const products = await Product.find({ userId: buyerId });
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No products found for this buyer'
+      });
+    }
+
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching buyer products:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   addProduct,
   updateProduct,
   deleteProduct,
-  getProductWithHistory
+  getProductWithHistory,
+  getProductsByBuyer,
 };

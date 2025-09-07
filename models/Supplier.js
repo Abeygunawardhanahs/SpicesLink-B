@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// This schema now perfectly matches your frontend registration form.
+// This schema now perfectly matches your frontend registration form + rating field
 const supplierSchema = new mongoose.Schema({
   // Matches the 'fullName' state in your app
   fullName: {
@@ -39,6 +39,19 @@ const supplierSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: 6
   },
+  // ✅ NEW: Rating field for supplier rating system
+  rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5,
+    validate: {
+      validator: function(v) {
+        return v >= 0 && v <= 5;
+      },
+      message: 'Rating must be between 0 and 5'
+    }
+  },
   lastLogin: {
     type: Date,
     default: null
@@ -58,5 +71,11 @@ const supplierSchema = new mongoose.Schema({
 
 // Create an index on the 'email' field for faster login queries
 supplierSchema.index({ email: 1 });
+// Add index for rating for faster sorting
+supplierSchema.index({ rating: -1 });
+// Add compound index for search functionality
+supplierSchema.index({ fullName: 'text', email: 'text' });
+
+// You can add other functions like getSupplierProfile and updateSupplierProfile here later.
 
 module.exports = mongoose.model('Supplier', supplierSchema);

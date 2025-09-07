@@ -1,258 +1,232 @@
 const mongoose = require('mongoose');
 
-const reservationItemSchema = new mongoose.Schema({
-  product: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true
-  },
-  requestedQuantity: {
-    type: Number,
-    required: true,
-    min: 1
-  },
-  availableQuantity: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  proposedPrice: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  notes: String
-});
-
 const reservationSchema = new mongoose.Schema({
-  reservationNumber: {
+  // Personal Information
+  name: {
     type: String,
-    unique: true,
-    required: true
+    required: [true, 'Name is required'],
+    trim: true,
+    maxLength: [100, 'Name cannot exceed 100 characters']
   },
-  
-  // Parties
-  buyer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Buyer',
-    required: true
+  mobileNo: {
+    type: String,
+    required: [true, 'Mobile number is required'],
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return /^\+?[\d\s\-\(\)]{10,15}$/.test(v);
+      },
+      message: 'Please enter a valid mobile number'
+    }
   },
+  location: {
+    type: String,
+    required: [true, 'Location is required'],
+    trim: true,
+    maxLength: [200, 'Location cannot exceed 200 characters']
+  },
+
+  // Product Information
+  spiceName: {
+    type: String,
+    required: [true, 'Spice name is required'],
+    trim: true
+  },
+  productName: {
+    type: String,
+    required: [true, 'Product name is required'],
+    trim: true
+  },
+  totalQuantity: {
+    type: Number,
+    required: [true, 'Total quantity is required'],
+    min: [0.1, 'Quantity must be at least 0.1 kg'],
+    max: [10000, 'Quantity cannot exceed 10000 kg']
+  },
+  qualityGrade: {
+    type: String,
+    trim: true,
+    default: 'Standard'
+  },
+
+  // Delivery & Payment
+  deliveryDate: {
+    type: Date,
+    validate: {
+      validator: function(v) {
+        return !v || v > new Date();
+      },
+      message: 'Delivery date must be in the future'
+    }
+  },
+  paymentMethod: {
+    type: String,
+    required: [true, 'Payment method is required'],
+    enum: {
+      values: ['advance', 'cod'],
+      message: 'Payment method must be either advance or cod'
+    }
+  },
+  advancePayment: {
+    type: Boolean,
+    default: false
+  },
+  cashOnDelivery: {
+    type: Boolean,
+    default: false
+  },
+
+  // Bank Details (optional, only for advance payment)
+  bankDetails: {
+    accountNumber: {
+      type: String,
+      trim: true
+    },
+    bankName: {
+      type: String,
+      trim: true
+    },
+    branchHolderName: {
+      type: String,
+      trim: true
+    }
+  },
+
+  // Relations - Compatible with your existing User models
   supplier: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Supplier',
-    required: true
+    required: [true, 'Supplier is required']
   },
-  
-  // Items
-  items: [reservationItemSchema],
-  
-  // Status
+  buyer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Buyer'
+  },
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  },
+
+  // Shop Information
+  shopInfo: {
+    shopId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier'
+    },
+    shopName: String,
+    shopLocation: String
+  },
+
+  // Status and Metadata
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'expired', 'converted_to_order'],
+    enum: ['pending', 'accepted', 'rejected', 'cancelled', 'completed'],
     default: 'pending'
   },
-  
-  // Pricing
-  totalEstimatedAmount: {
-    type: Number,
-    required: true
-  },
-  
-  // Delivery Information
-  requestedDeliveryDate: {
-    type: Date,
-    required: true
-  },
-  proposedDeliveryDate: Date,
-  
-  // Location
-  deliveryAddress: {
-    street: String,
-    city: String,
-    state: String,
-    zipCode: String,
-    country: { type: String, default: 'Sri Lanka' },
-    coordinates: {
-      latitude: Number,
-      longitude: Number
-    }
-  },
-  
-  // Communication
-  buyerNotes: String,
-  supplierNotes: String,
-  
-  // Expiry
-  expiresAt: {
-    type: Date,
-    required: true,
-    default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
-  },
-  
-  // Response details
-  respondedAt: Date,
-  responseNotes: String,
-  
-  // Conversion to order
-  convertedOrder: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order'
-  },
-  convertedAt: Date,
-  
-  // Terms and Conditions
-  terms: {
-    paymentTerms: String,
-    deliveryTerms: String,
-    qualityRequirements: String,
-    cancellationPolicy: String
-  },
-  
-  // Priority
   priority: {
     type: String,
     enum: ['low', 'medium', 'high', 'urgent'],
     default: 'medium'
+  },
+  notes: {
+    type: String,
+    maxLength: [500, 'Notes cannot exceed 500 characters']
+  },
+  
+  // Timestamps
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  
+  // Response from supplier
+  supplierResponse: {
+    respondedAt: Date,
+    message: String,
+    estimatedPrice: Number,
+    counterOffer: {
+      quantity: Number,
+      pricePerKg: Number,
+      deliveryDate: Date
+    }
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// Pre-save middleware to generate reservation number
-reservationSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const count = await mongoose.model('Reservation').countDocuments();
-    this.reservationNumber = `RES-${Date.now()}-${(count + 1).toString().padStart(4, '0')}`;
-  }
-  next();
-});
-
-// Mark as responded when status changes from pending
-reservationSchema.pre('save', function(next) {
-  if (this.isModified('status') && this.status !== 'pending' && !this.respondedAt) {
-    this.respondedAt = new Date();
-  }
-  next();
-});
-
-// Indexes
-reservationSchema.index({ buyer: 1, createdAt: -1 });
+// Indexes for better query performance
 reservationSchema.index({ supplier: 1, createdAt: -1 });
-reservationSchema.index({ reservationNumber: 1 });
-reservationSchema.index({ status: 1 });
-reservationSchema.index({ expiresAt: 1 });
+reservationSchema.index({ status: 1, createdAt: -1 });
+reservationSchema.index({ mobileNo: 1 });
+reservationSchema.index({ 'shopInfo.shopId': 1 });
 
-// Methods
-reservationSchema.methods.accept = async function(supplierNotes, proposedDeliveryDate) {
-  this.status = 'accepted';
-  this.supplierNotes = supplierNotes;
-  this.proposedDeliveryDate = proposedDeliveryDate;
-  this.respondedAt = new Date();
+// Virtual for total estimated cost
+reservationSchema.virtual('estimatedTotalCost').get(function() {
+  if (this.supplierResponse && this.supplierResponse.estimatedPrice) {
+    return this.totalQuantity * this.supplierResponse.estimatedPrice;
+  }
+  return null;
+});
+
+// Pre-save middleware to update timestamps and set bank details
+reservationSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
   
-  await this.save();
+  // Set bank details object based on payment method
+  if (this.paymentMethod === 'advance') {
+    this.advancePayment = true;
+    this.cashOnDelivery = false;
+  } else if (this.paymentMethod === 'cod') {
+    this.cashOnDelivery = true;
+    this.advancePayment = false;
+    // Clear bank details for COD
+    this.bankDetails = {
+      accountNumber: '',
+      bankName: '',
+      branchHolderName: ''
+    };
+  }
   
-  // Create notification for buyer
-  const Notification = mongoose.model('Notification');
-  await Notification.createNotification({
-    recipient: this.buyer,
-    recipientModel: 'Buyer',
-    sender: this.supplier,
-    senderModel: 'Supplier',
-    type: 'reservation_accepted',
-    title: 'Reservation Accepted',
-    message: `Your reservation ${this.reservationNumber} has been accepted by the supplier.`,
-    relatedReservation: this._id
-  });
+  next();
+});
+
+// Static methods
+reservationSchema.statics.getSupplierReservations = function(supplierId, status = null) {
+  const query = { supplier: supplierId };
+  if (status) query.status = status;
   
-  return this;
+  return this.find(query)
+    .populate('buyer', 'name email mobileNo')
+    .populate('product', 'name category')
+    .sort({ createdAt: -1 });
 };
 
-reservationSchema.methods.reject = async function(supplierNotes) {
-  this.status = 'rejected';
-  this.supplierNotes = supplierNotes;
-  this.respondedAt = new Date();
-  
-  await this.save();
-  
-  // Create notification for buyer
-  const Notification = mongoose.model('Notification');
-  await Notification.createNotification({
-    recipient: this.buyer,
-    recipientModel: 'Buyer',
-    sender: this.supplier,
-    senderModel: 'Supplier',
-    type: 'reservation_rejected',
-    title: 'Reservation Rejected',
-    message: `Your reservation ${this.reservationNumber} has been rejected by the supplier.`,
-    relatedReservation: this._id
-  });
-  
-  return this;
+reservationSchema.statics.getBuyerReservations = function(buyerId) {
+  return this.find({ buyer: buyerId })
+    .populate('supplier', 'businessName location contactNumber')
+    .populate('product', 'name category')
+    .sort({ createdAt: -1 });
 };
 
-reservationSchema.methods.convertToOrder = async function() {
-  const Order = mongoose.model('Order');
+// Instance methods
+reservationSchema.methods.updateStatus = function(newStatus, supplierMessage = null) {
+  this.status = newStatus;
+  this.updatedAt = Date.now();
   
-  const orderItems = this.items.map(item => ({
-    product: item.product,
-    quantity: item.availableQuantity,
-    priceAtTime: item.proposedPrice,
-    subtotal: item.availableQuantity * item.proposedPrice
-  }));
+  if (supplierMessage && ['accepted', 'rejected'].includes(newStatus)) {
+    this.supplierResponse = {
+      respondedAt: new Date(),
+      message: supplierMessage
+    };
+  }
   
-  const totalAmount = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-  
-  const order = new Order({
-    buyer: this.buyer,
-    supplier: this.supplier,
-    items: orderItems,
-    totalAmount,
-    shippingAddress: this.deliveryAddress,
-    estimatedDelivery: this.proposedDeliveryDate,
-    notes: `Converted from reservation ${this.reservationNumber}`,
-    payment: {
-      method: 'stripe', // Default, can be changed
-      status: 'pending'
-    }
-  });
-  
-  await order.save();
-  
-  this.status = 'converted_to_order';
-  this.convertedOrder = order._id;
-  this.convertedAt = new Date();
-  await this.save();
-  
-  // Create notification for both parties
-  const Notification = mongoose.model('Notification');
-  await Notification.createNotification({
-    recipient: this.buyer,
-    recipientModel: 'Buyer',
-    sender: this.supplier,
-    senderModel: 'Supplier',
-    type: 'order_created',
-    title: 'Order Created',
-    message: `Your reservation ${this.reservationNumber} has been converted to order ${order.orderNumber}.`,
-    relatedOrder: order._id
-  });
-  
-  return order;
-};
-
-// Static method to expire old reservations
-reservationSchema.statics.expireOldReservations = async function() {
-  const result = await this.updateMany(
-    {
-      status: 'pending',
-      expiresAt: { $lt: new Date() }
-    },
-    {
-      status: 'expired'
-    }
-  );
-  
-  return result.modifiedCount;
+  return this.save();
 };
 
 module.exports = mongoose.model('Reservation', reservationSchema);
