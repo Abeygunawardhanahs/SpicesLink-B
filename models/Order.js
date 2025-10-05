@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Sub-schema for order items
 const orderItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,7 +21,7 @@ const orderItemSchema = new mongoose.Schema({
     required: true
   }
 });
-
+// Main schema for orders.
 const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
@@ -91,7 +92,7 @@ const orderSchema = new mongoose.Schema({
   buyerNotes: String,
   supplierNotes: String,
   
-  // Ratings (after completion)
+  // Ratings 
   buyerRating: {
     rating: { type: Number, min: 1, max: 5 },
     comment: String,

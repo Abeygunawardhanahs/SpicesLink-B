@@ -37,7 +37,7 @@ exports.createPaymentIntent = async (req, res) => {
     let paymentIntent;
 
     if (!stripe) {
-      // Demo mode - create mock payment intent
+      // create mock payment intent
       paymentIntent = {
         id: `pi_demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         client_secret: `pi_demo_${Date.now()}_secret`,

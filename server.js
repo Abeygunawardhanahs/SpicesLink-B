@@ -3,17 +3,15 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
+
 const app = express();
 
-// *** IMPORTANT: Register all models at startup to avoid schema registration errors ***
-console.log('📦 Registering Mongoose models...');
+
+console.log(' Registering Mongoose models...');
 const Buyer = require('./models/Buyer');
 const Supplier = require('./models/Supplier'); 
 const Product = require('./models/Product');
 const Reservation = require('./models/Reservation'); // NEW: Add Reservation model
-// Add other models here as you create them
-// const Order = require('./models/Order');
-// const Notification = require('./models/Notification');
 console.log('✅ All models registered successfully');
 
 // Enable CORS
@@ -63,7 +61,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
-const reservationRoutes = require('./routes/reservationRoutes'); // NEW: Add reservation routes
+const reservationRoutes = require('./routes/reservationRoutes'); 
 
 // API Routes
 app.use('/api/buyers', buyerRoutes);
@@ -73,7 +71,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/ratings', ratingRoutes);
-app.use('/api/reservations', reservationRoutes); // NEW: Add reservation API routes
+app.use('/api/reservations', reservationRoutes); 
 
 // Test route
 app.get('/test', (req, res) => {
@@ -84,7 +82,7 @@ app.get('/test', (req, res) => {
       buyers: '/api/buyers',
       suppliers: '/api/suppliers',
       products: '/api/products',
-      reservations: '/api/reservations' // NEW: Add to test route
+      reservations: '/api/reservations' 
     }
   });
 });
@@ -99,11 +97,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// UPDATED: API info route with reservation endpoints
+// API info route with reservation endpoints
 app.get('/api', (req, res) => {
   res.json({
     message: 'Fresh Food Supply Chain API',
-    version: '2.1', // Updated version
+    version: '2.1', 
     endpoints: {
       buyers: {
         register: 'POST /api/buyers/register',
@@ -125,7 +123,7 @@ app.get('/api', (req, res) => {
         delete: 'DELETE /api/products/:id (supplier auth required)',
         priceHistory: 'GET /api/products/:id/prices'
       },
-      // NEW: Reservation endpoints
+      
       reservations: {
         create: 'POST /api/reservations',
         supplierList: 'GET /api/reservations/supplier/:supplierId? (auth required)',
@@ -140,9 +138,9 @@ app.get('/api', (req, res) => {
     authentication: {
       type: 'Bearer Token',
       header: 'Authorization: Bearer <token>',
-      userTypes: ['buyer', 'supplier'] // NEW: Updated auth info
+      userTypes: ['buyer', 'supplier']
     },
-    // NEW: Features section
+    
     features: {
       reservations: {
         description: 'Complete reservation management system',
@@ -192,7 +190,7 @@ app.use((err, req, res, next) => {
     });
   }
   
-  // Mongoose schema error (THIS IS THE KEY FIX)
+  // Mongoose schema error 
   if (err.name === 'MissingSchemaError') {
     return res.status(500).json({
       success: false,
@@ -209,7 +207,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// UPDATED: 404 handler with reservation routes
+// 404 handler with reservation routes
 app.use((req, res) => {
   res.status(404).json({ 
     success: false,
@@ -218,7 +216,7 @@ app.use((req, res) => {
       '/api/buyers',
       '/api/suppliers', 
       '/api/products',
-      '/api/reservations', // NEW: Add reservation route
+      '/api/reservations', 
       '/test',
       '/health',
       '/api'
@@ -229,14 +227,14 @@ app.use((req, res) => {
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
-  console.log('✅ MongoDB connected successfully');
-  console.log(`📊 Database: ${mongoose.connection.name}`);
-  console.log('📋 Registered models:', mongoose.modelNames());
+  console.log(' MongoDB connected successfully');
+  console.log(` Database: ${mongoose.connection.name}`);
+  console.log(' Registered models:', mongoose.modelNames());
   
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server running on http://localhost:${PORT}`);
-    console.log('🔗 Available endpoints:');
+    console.log(` Server running on http://localhost:${PORT}`);
+    console.log(' Available endpoints:');
     console.log(`   • Buyers: http://localhost:${PORT}/api/buyers`);
     console.log(`   • Suppliers: http://localhost:${PORT}/api/suppliers`);
     console.log(`   • Products: http://localhost:${PORT}/api/products`);
@@ -246,6 +244,6 @@ mongoose.connect(process.env.MONGO_URI)
   });
 })
 .catch(err => {
-  console.error('❌ MongoDB connection error:', err);
+  console.error('MongoDB connection error:', err);
   process.exit(1);
 });

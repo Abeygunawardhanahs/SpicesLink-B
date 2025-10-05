@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const Buyer = require('../models/Buyer');
 const Supplier = require('../models/Supplier');
 
-// General authentication middleware (EXISTING - NO CHANGES)
+// General authentication middleware 
 const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -27,7 +27,7 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// Buyer-specific authentication middleware (EXISTING - NO CHANGES)
+// Buyer-specific authentication middleware 
 const authenticateBuyer = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -71,7 +71,7 @@ const authenticateBuyer = async (req, res, next) => {
   }
 };
 
-// Supplier-specific authentication middleware (EXISTING - NO CHANGES)
+// Supplier-specific authentication middleware 
 const authenticateSupplier = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -115,7 +115,7 @@ const authenticateSupplier = async (req, res, next) => {
   }
 };
 
-// Admin authentication (EXISTING - NO CHANGES)
+// Admin authentication 
 const authenticateAdmin = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -148,7 +148,6 @@ const authenticateAdmin = async (req, res, next) => {
   }
 };
 
-// NEW: Enhanced authentication that works with your existing system
 // This middleware is compatible with your existing token structure
 const authenticateToken = async (req, res, next) => {
   try {
@@ -192,11 +191,11 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Add user info to request object - compatible with existing code
+    // Add user info to request object 
     req.user = {
       id: decoded.id,
-      role: decoded.role, // Keep existing role field
-      userType: userType, // Add userType for new reservation system
+      role: decoded.role, 
+      userType: userType, 
       email: user.email,
       name: user.name || user.businessName
     };
@@ -233,7 +232,7 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// NEW: Optional authentication - doesn't fail if no token provided
+// Optional authentication - doesn't fail if no token provided
 // Useful for endpoints that work for both authenticated and guest users
 const optionalAuth = async (req, res, next) => {
   try {
@@ -279,12 +278,12 @@ const optionalAuth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    // Continue without authentication if any error occurs
+    // Continue 
     next();
   }
 };
 
-// NEW: Middleware to ensure supplier role (using existing role system)
+// Middleware to ensure supplier role 
 const requireSupplier = (req, res, next) => {
   if (req.user && req.user.role === 'supplier') {
     next();
@@ -296,7 +295,7 @@ const requireSupplier = (req, res, next) => {
   }
 };
 
-// NEW: Middleware to ensure buyer role (using existing role system)  
+// Middleware to ensure buyer role   
 const requireBuyer = (req, res, next) => {
   if (req.user && req.user.role === 'buyer') {
     next();
@@ -309,13 +308,11 @@ const requireBuyer = (req, res, next) => {
 };
 
 module.exports = {
-  // Existing middleware (NO CHANGES)
+  
   authenticate,
   authenticateBuyer,
   authenticateSupplier,
   authenticateAdmin,
-  
-  // New middleware for reservation system (compatible with existing system)
   authenticateToken,
   optionalAuth,
   requireSupplier,

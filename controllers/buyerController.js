@@ -1,13 +1,15 @@
 const Buyer = require('../models/Buyer');
+// for password hashing and JWT
 const bcrypt = require('bcryptjs');
+// JWT for authentication
 const jwt = require('jsonwebtoken');
 
-// --- BUYER REGISTRATION ---
+// BUYER REGISTRATION  
 exports.registerBuyer = async (req, res) => {
   try {
     console.log('=== BUYER REGISTRATION ATTEMPT ===');
     console.log('Request body:', { ...req.body, password: '[HIDDEN]' });
-
+   // Get input data
     const {
       shopName,
       shopOwnerName,
@@ -30,7 +32,7 @@ exports.registerBuyer = async (req, res) => {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create a new buyer
+    // Create and save a new buyer
     const newBuyer = new Buyer({
       shopName,
       shopOwnerName,
@@ -39,13 +41,13 @@ exports.registerBuyer = async (req, res) => {
       email: email.toLowerCase(),
       password: hashedPassword
     });
-
+    // save the new buyer to the DB
     await newBuyer.save();
     console.log('New buyer saved successfully:', email);
-
+    // remove password from response
     const buyerResponse = newBuyer.toObject();
     delete buyerResponse.password;
-
+    // send success response
     res.status(201).json({
       success: true,
       message: 'Buyer registered successfully!',
@@ -56,6 +58,7 @@ exports.registerBuyer = async (req, res) => {
     });
 
   } catch (error) {
+    // handle errors
     console.error(error);
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message);
@@ -78,9 +81,10 @@ exports.registerBuyer = async (req, res) => {
   }
 };
 
-// --- BUYER LOGIN ---
+// BUYER LOGIN
 exports.loginBuyer = async (req, res) => {
   try {
+    // get email and password from request body
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -89,7 +93,7 @@ exports.loginBuyer = async (req, res) => {
         message: 'Email and password are required'
       });
     }
-
+    // find buyer by email
     const buyer = await Buyer.findOne({ email: email.toLowerCase() });
     if (!buyer) {
       return res.status(401).json({
@@ -97,14 +101,14 @@ exports.loginBuyer = async (req, res) => {
         message: 'Invalid email or password'
       });
     }
-
+    // check if buyer is active
     if (!buyer.isActive) {
       return res.status(401).json({
         success: false,
         message: 'Account is inactive. Contact support.'
       });
     }
-
+    // compare passwords
     const isPasswordValid = await bcrypt.compare(password, buyer.password);
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -112,19 +116,20 @@ exports.loginBuyer = async (req, res) => {
         message: 'Invalid email or password'
       });
     }
-
+    // update last login time
     buyer.lastLogin = new Date();
     await buyer.save();
-
+    // generate JWT token
     const token = jwt.sign(
       { userId: buyer._id, email: buyer.email, role: 'Buyer', shopOwnerName: buyer.shopOwnerName },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-
+    // send success response
     const buyerResponse = buyer.toObject();
+    // remove password before response
     delete buyerResponse.password;
-
+    // send sucess response
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -140,12 +145,13 @@ exports.loginBuyer = async (req, res) => {
   }
 };
 
-// --- ADD / UPDATE BANK DETAILS ---
+// ADD / UPDATE BANK DETAILS
 exports.addBankDetails = async (req, res) => {
   try {
-    const { userId } = req.params;   // buyer ID from URL
+    // get buyer Id from url (params) and bank details from body
+    const { userId } = req.params;  
     const { bankName, accountNumber, branch } = req.body;
-
+    // find buyer by Id
     const buyer = await Buyer.findById(userId);
     if (!buyer) {
       return res.status(404).json({
@@ -153,10 +159,10 @@ exports.addBankDetails = async (req, res) => {
         message: 'Buyer not found'
       });
     }
-
+    // update bank details
     buyer.bankDetails = { bankName, accountNumber, branch, addedAt: new Date() };
     await buyer.save();
-
+    // send success response
     res.status(200).json({
       success: true,
       message: 'Bank details updated successfully',
@@ -172,11 +178,12 @@ exports.addBankDetails = async (req, res) => {
   }
 };
 
-// --- GET BUYER BY ID ---
-exports.getBuyerById = async (req, res) => {
+// GET BUYER PROFILE by ID 
+exports.getBuyerProfileById = async (req, res) => {
   try {
-    const { _id } = req.params;
-    const buyer = await Buyer.findById(_id).select('-password'); // exclude password
+    const { id } = req.params;
+    // Find buyer by ID and exclude sensitive fields
+    const buyer = await Buyer.findById(id).select('-password -__v');
 
     if (!buyer) {
       return res.status(404).json({
@@ -185,6 +192,63 @@ exports.getBuyerById = async (req, res) => {
       });
     }
 
+    res.status(200).json({
+      success: true,
+      message: 'Buyer profile fetched successfully',
+      data: { buyer }
+    });
+
+  } catch (error) {
+    console.error('Error fetching buyer profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching buyer profile'
+    });
+  }
+};
+
+
+// GET ALL BUYERS/SHOPS
+exports.getAllBuyers = async (req, res) => {
+  try {
+    // Find all buyers and exclude password field
+    const buyers = await Buyer.find()
+      .select('-password -__v')
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    res.status(200).json({
+      success: true,
+      message: 'Buyers fetched successfully',
+      data: { 
+        buyers,
+        total: buyers.length 
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching all buyers:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching buyers'
+    });
+  }
+};
+
+
+// GET BUYER by ID 
+exports.getBuyerById = async (req, res) => {
+  try {
+    const { _id } = req.params;
+    // find buyer by Id
+    const buyer = await Buyer.findById(_id).select('-password'); // exclude password
+
+    if (!buyer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Buyer not found'
+      });
+    }
+    // send success response
     res.status(200).json({
       success: true,
       message: 'Buyer fetched successfully',

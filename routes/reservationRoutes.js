@@ -10,71 +10,33 @@ const {
   getReservationStats
 } = require('../controllers/reservationController');
 
-// Import your existing middleware - UPDATE THIS PATH TO MATCH YOUR FILE STRUCTURE
-// Common paths: '../middleware/auth', '../middleware/authMiddleware', '../middlewares/authenticate'
 const {
   authenticateToken,
   optionalAuth,
   requireSupplier,
   requireBuyer,
-  authenticateSupplier,  // Your existing middleware
-  authenticateBuyer      // Your existing middleware
-} = require('../middleware/auth'); // UPDATED PATH - adjust this to match your actual file path
+  authenticateSupplier,
+  authenticateBuyer
+} = require('../middleware/auth');
 
-// Alternative import options if the path is different:
-// const { authenticateSupplier, authenticateBuyer } = require('../middleware/authMiddleware');
-// const { authenticateSupplier, authenticateBuyer } = require('../middlewares/authenticate');
-
-// ==============================================
-// PUBLIC ROUTES (No authentication required)
-// ==============================================
-
-// Create reservation - works for both authenticated and guest users
-router.post('/', optionalAuth, createReservation);
-
-// Get reservations by mobile number (for guest users to track their reservations)
+// PUBLIC ROUTES
+router.post('/', createReservation);
 router.get('/public/:mobileNo', getBuyerReservations);
 
-// Get single reservation by ID (public access for tracking)
-router.get('/:id', getReservationById);
-
-// ==============================================
-// SUPPLIER ROUTES (Require supplier authentication)
-// ==============================================
-
-// Get supplier's reservations - using your existing authenticateSupplier middleware
+// SUPPLIER ROUTES - Fixed: separate routes instead of optional parameter
+router.get('/supplier', authenticateSupplier, getSupplierReservations);
 router.get('/supplier/:supplierId', authenticateSupplier, getSupplierReservations);
-
-// Update reservation status - suppliers only, using your existing middleware
-router.put('/:id/status', authenticateSupplier, updateReservationStatus);
-
-// Get supplier statistics - using your existing middleware
+//router.put('/:id/status', authenticateSupplier, updateReservationStatus);
 router.get('/stats/:supplierId', authenticateSupplier, getReservationStats);
+router.get('/stats', authenticateSupplier, getReservationStats);
 
-// ==============================================
-// BUYER ROUTES (Require buyer authentication)
-// ==============================================
-
-// Get buyer's own reservations - using your existing authenticateBuyer middleware
+// BUYER ROUTES
 router.get('/buyer', authenticateBuyer, getBuyerReservations);
 
-// ==============================================
-// MIXED ROUTES (Require any authentication)
-// ==============================================
-
-// Delete reservation - require authentication but allow both buyer and supplier
+// MIXED ROUTES
 router.delete('/:id', authenticateToken, deleteReservation);
 
-// ==============================================
-// ALTERNATIVE ROUTES (Using new middleware for flexibility)
-// ==============================================
-
-// Alternative supplier routes using new middleware (you can choose which to use)
-// router.get('/supplier/:supplierId?', authenticateToken, requireSupplier, getSupplierReservations);
-// router.put('/:id/status', authenticateToken, requireSupplier, updateReservationStatus);
-// router.get('/stats/:supplierId?', authenticateToken, requireSupplier, getReservationStats);
-
-// Alternative buyer routes using new middleware
-// router.get('/buyer', authenticateToken, requireBuyer, getBuyerReservations);
+// SINGLE RESERVATION - Must be last to avoid conflicts
+router.get('/:id', getReservationById);
 
 module.exports = router;

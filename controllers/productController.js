@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const mongoose = require('mongoose'); 
 
 // Add a new product (Updated for new fields, no image)
 const addProduct = async (req, res) => {
@@ -15,8 +16,7 @@ const addProduct = async (req, res) => {
       userName,
       shopName,
       location,
-      description,
-      category
+    
     });
 
     // Validate required fields
@@ -69,7 +69,7 @@ const addProduct = async (req, res) => {
       location: location.trim(),
       description: description ? description.trim() : '',
       category: category || 'Uncategorized',
-      userType: 'Buyer' // Default to Buyer, can be changed if needed
+      userType: 'Buyer' 
     };
 
     console.log('Creating product with data:', productData);
@@ -245,7 +245,16 @@ const getProductsByBuyer = async (req, res) => {
     const { buyerId } = req.params;
     console.log('Fetching products for buyerId:', buyerId);
 
-    const products = await Product.find({ userId: buyerId });
+       if (!mongoose.Types.ObjectId.isValid(buyerId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid buyer ID format'
+      });
+    }
+
+    const products = await Product.find({
+      userId: new mongoose.Types.ObjectId(buyerId)
+    });
 
     if (!products || products.length === 0) {
       return res.status(404).json({
@@ -253,7 +262,6 @@ const getProductsByBuyer = async (req, res) => {
         message: 'No products found for this buyer'
       });
     }
-
     res.json(products);
   } catch (error) {
     console.error('Error fetching buyer products:', error);

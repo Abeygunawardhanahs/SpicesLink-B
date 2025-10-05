@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Define the Notification schema to store notifications for buyers and suppliers.
 const notificationSchema = new mongoose.Schema({
   recipient: {
     type: mongoose.Schema.Types.ObjectId,
@@ -51,6 +52,7 @@ const notificationSchema = new mongoose.Schema({
   },
   
   // Related Data
+  //Links to an Order, Reservation, or Product if applicable
   relatedOrder: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order'
@@ -118,8 +120,6 @@ notificationSchema.statics.createNotification = async function(data) {
   const notification = new this(data);
   await notification.save();
   
-  // TODO: Send push notification
-  // TODO: Send email if required
   
   return notification;
 };

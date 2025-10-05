@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
 
-// This schema now perfectly matches your frontend registration form + rating field
+// supplier schema
 const supplierSchema = new mongoose.Schema({
-  // Matches the 'fullName' state in your app
   fullName: {
     type: String,
     required: [true, 'Full name is required'],
     trim: true
   },
-  // Matches the 'contactNumber' state in your app
   contactNumber: {
     type: String,
     required: [true, 'Contact number is required'],
@@ -19,7 +17,6 @@ const supplierSchema = new mongoose.Schema({
       message: 'Contact number should be between 10-15 digits'
     }
   },
-  // Matches the 'email' state in your app
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -33,41 +30,29 @@ const supplierSchema = new mongoose.Schema({
       message: 'Please enter a valid email address'
     }
   },
-  // Matches the 'password' state in your app
   password: {
     type: String,
     required: [true, 'Password is required'],
     minlength: 6
   },
-  // ✅ NEW: Rating field for supplier rating system
+
+  // Rating system
   rating: {
     type: Number,
     default: 0,
     min: 0,
-    max: 5,
-    validate: {
-      validator: function(v) {
-        return v >= 0 && v <= 5;
-      },
-      message: 'Rating must be between 0 and 5'
-    }
+    max: 5
   },
-  lastLogin: {
-    type: Date,
-    default: null
+  ratingCount: {       
+    type: Number,
+    default: 0
   },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  isVerified: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  // Adds createdAt and updatedAt timestamps automatically
-  timestamps: true
-});
+
+  lastLogin: { type: Date, default: null },
+  isActive: { type: Boolean, default: true },
+  isVerified: { type: Boolean, default: false }
+}, { timestamps: true });
+
 
 // Create an index on the 'email' field for faster login queries
 supplierSchema.index({ email: 1 });

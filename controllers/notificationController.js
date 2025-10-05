@@ -226,7 +226,7 @@ exports.getNotificationStats = async (req, res) => {
   }
 };
 
-// Create notification (admin/system use)
+// Create notification (system use)
 exports.createNotification = async (req, res) => {
   try {
     const {

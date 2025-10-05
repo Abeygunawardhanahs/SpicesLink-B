@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Buyer schema that matches your frontend form and controller expectations
+// Buyer schema 
 const buyerSchema = new mongoose.Schema({
   shopName: {
     type: String,
@@ -45,8 +45,19 @@ const buyerSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: 6
   },
+  
+  // decimalnumber: {
+  //   type: Double,
+  //   required: [true ,'only have two decimal points'],
+  //   validate: {
+  //     validator: function(v) {
+  //       return /^\d+(\.\d{1,2})?$/.test(v);
+  //     },
+  //     message: 'Value must have at most two decimal points.'
+  //   }
+  // },
 
-  // --- NEW: Optional Bank Details ---
+  //  Bank Details 
   bankDetails: {
     accountNumber: { type: String, default: null },
     ifscCode: { type: String, default: null },
@@ -55,7 +66,7 @@ const buyerSchema = new mongoose.Schema({
     addedAt: { type: Date, default: null }
   },
 
-  // --- Standard fields for user management ---
+  // Tracks when buyer last logged in
   lastLogin: {
     type: Date,
     default: null
@@ -72,7 +83,7 @@ const buyerSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
+// Indexes -searching buyers by location
 buyerSchema.index({ shopLocation: 1 });
 
 module.exports = mongoose.model('Buyer', buyerSchema);

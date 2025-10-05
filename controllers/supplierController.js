@@ -2,11 +2,11 @@ const Supplier = require('../models/Supplier');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// --- SUPPLIER REGISTRATION ---
-// Updated to match the simple frontend form
+// SUPPLIER REGISTRATION 
+
 exports.registerSupplier = async (req, res) => {
   try {
-    // Destructure the exact fields sent from the frontend
+    
     const { fullName, contactNumber, email, password } = req.body;
 
     // Check if supplier already exists using the 'email' field
@@ -26,7 +26,7 @@ exports.registerSupplier = async (req, res) => {
     const newSupplier = new Supplier({
       fullName,
       contactNumber,
-      email: email.toLowerCase(), // Store email in lowercase for consistency
+      email: email.toLowerCase(), 
       password: hashedPassword
     });
 
@@ -65,8 +65,8 @@ exports.registerSupplier = async (req, res) => {
 };
 
 
-// --- SUPPLIER LOGIN ---
-// Updated to use 'email' instead of 'emailAddress'
+// SUPPLIER LOGIN 
+
 exports.loginSupplier = async (req, res) => {
   try {
     // Expect 'email' and 'password' from the login form
@@ -113,7 +113,7 @@ exports.loginSupplier = async (req, res) => {
     const token = jwt.sign(
       {
         id: supplier._id,
-        email: supplier.email, // Use the correct 'email' field
+        email: supplier.email,
         role: 'supplier'
       },
       process.env.JWT_SECRET,
@@ -142,4 +142,3 @@ exports.loginSupplier = async (req, res) => {
   }
 };
 
-// You can add other functions like getSupplierProfile and updateSupplierProfile here later.

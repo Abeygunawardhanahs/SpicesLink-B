@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Define the Product schema
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -7,18 +8,7 @@ const productSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Product name cannot exceed 100 characters']
   },
-  // description: {
-  //   type: String,
-  //   default: '',
-  //   maxlength: [500, 'Description cannot exceed 500 characters']
-  // },
-  // category: {
-  //   type: String,
-  //   default: 'Uncategorized',
-  //   enum: ['Spices', 'Herbs', 'Seeds', 'Powders', 'Whole Spices', 'Blends', 'Other', 'Uncategorized']
-  // },
-  // REMOVED: image field - no longer needed
-  
+ 
   // User identification fields
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -49,7 +39,7 @@ const productSchema = new mongoose.Schema({
     default: 'Buyer'
   },
   
-  // Price History with enhanced structure
+  // Price History 
   priceHistory: [{
     pricePer100g: {
       type: String,
@@ -77,13 +67,13 @@ const productSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Add indexes for better query performance
+// Make queries faster for common searches
 productSchema.index({ userId: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ 'priceHistory.date': -1 });
-productSchema.index({ location: 1 }); // New index for location-based queries
-productSchema.index({ shopName: 1 }); // New index for shop-based queries
+productSchema.index({ location: 1 });
+productSchema.index({ shopName: 1 }); 
 
 // Pre-save middleware
 productSchema.pre('save', async function(next) {

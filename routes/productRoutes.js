@@ -7,10 +7,10 @@ const mongoose = require('mongoose');
 const productController = require('../controllers/productController');
 
 const {
-   getProductsByBuyer   // 
+   getProductsByBuyer   
 }  = require('../controllers/productController');
 
-// Middleware to log all requests (for debugging)
+// Middleware to log all requests for debugging
 router.use((req, res, next) => {
   console.log(`=== PRODUCT ROUTE DEBUG ===`);
   console.log(`${req.method} ${req.path}`);
@@ -33,25 +33,25 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Add a new product
+//Add a new product
 router.post('/', productController.addProduct);
 
 // Get products by user ID
-router.get('/buyer/:buyerId', async (req, res) => {
-  try {
-    const { buyerId } = req.params;
-    if (!buyerId) return res.status(400).json({ message: 'Buyer ID is required' });
+// router.get('/buyer/:buyerId', async (req, res) => {
+//   try {
+//     const { buyerId } = req.params;
+//     if (!buyerId) return res.status(400).json({ message: 'Buyer ID is required' });
 
-    const products = await Product.find({ userId: buyerId });
-    console.log(`Found ${products.length} products for user ${buyerId}`);
-    res.json(products);
-  } catch (error) {
-    console.error('Error fetching user products:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
+//     const products = await Product.find({ userId: buyerId });
+//     console.log(`Found ${products.length} products for user ${buyerId}`);
+//     res.json(products);
+//   } catch (error) {
+//     console.error('Error fetching user products:', error);
+//     res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// });
 
-// **FIXED: Get price history for a specific product**
+// Get price history for a specific product
 router.get('/:productId/prices', async (req, res) => {
   try {
     const { productId } = req.params;
@@ -76,7 +76,7 @@ router.get('/:productId/prices', async (req, res) => {
       });
     }
 
-    // Return price history
+    // get price history
     const prices = product.priceHistory || [];
     console.log(`Found ${prices.length} price entries for product ${productId}`);
 
@@ -97,7 +97,7 @@ router.get('/:productId/prices', async (req, res) => {
   }
 });
 
-// **FIXED: Add new price entry to a product**
+// Add new price entry to a product
 router.post('/:productId/prices', async (req, res) => {
   try {
     const { productId } = req.params;
@@ -162,13 +162,13 @@ router.post('/:productId/prices', async (req, res) => {
   }
 });
 
-// **FIXED: Update existing price entry**
+// Update existing price entry
 router.put('/:productId/prices/:priceId', async (req, res) => {
   try {
     const { productId, priceId } = req.params;
     const { pricePer100g, weeklyQuantity } = req.body;
 
-    // Validate IDs
+    // Validate Ids
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ 
         success: false, 
@@ -203,7 +203,7 @@ router.put('/:productId/prices/:priceId', async (req, res) => {
         message: 'No price history found' 
       });
     }
-
+    // Find the price entry by Id
     const priceEntryIndex = product.priceHistory.findIndex(
       entry => entry._id.toString() === priceId
     );
@@ -315,7 +315,7 @@ router.get('/shops/:productName', async (req, res) => {
 
     console.log('=== SEARCHING FOR SHOPS ===');
     console.log('Product Name:', productName);
-
+    // find products matching the name 
     const products = await Product.find({ 
       name: new RegExp(productName, 'i') 
     });
@@ -328,7 +328,7 @@ router.get('/shops/:productName', async (req, res) => {
         message: `No products found matching "${productName}"` 
       });
     }
-
+    // Extract unique buyer IDs from products
     const buyerIds = [...new Set(
       products
         .filter(p => p.userType === 'Buyer')
@@ -343,10 +343,10 @@ router.get('/shops/:productName', async (req, res) => {
         message: `No buyer shops found selling "${productName}"` 
       });
     }
-
+    // Find buyers (shops) by Ids.
     const buyers = await Buyer.find({ _id: { $in: buyerIds } });
     console.log('Found buyers:', buyers.length);
-
+    // map buyers to shop details with product info
     const shops = buyers.map(buyer => {
       const buyerProducts = products.filter(p => 
         p.userId.toString() === buyer._id.toString() && p.userType === 'Buyer'
@@ -407,14 +407,14 @@ router.get('/shops/:shopId/details', async (req, res) => {
   try {
     const { shopId } = req.params;
     const { productName } = req.query;
-
+    // Validate shopId
     if (!mongoose.Types.ObjectId.isValid(shopId)) {
       return res.status(400).json({ success: false, message: 'Invalid shopId' });
     }
 
     const buyer = await Buyer.findById(shopId);
     if (!buyer) return res.status(404).json({ success: false, message: 'Shop not found' });
-
+    //Find products for the shop
     const products = await Product.find({
       userId: buyer._id,
       name: new RegExp(productName, 'i'),
@@ -433,9 +433,28 @@ router.get('/shops/:shopId/details', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+// Get products 
+// router.get('/buyer/:buyerId', getProductsByBuyer);
+router.get('/buyer/:buyerId', async (req, res) => {
+  try {
+    const { buyerId } = req.params;
+    if (!buyerId) return res.status(400).json({ message: 'Buyer ID is required' });
 
-router.get('/buyer/:buyerId', getProductsByBuyer);
+    if (!mongoose.Types.ObjectId.isValid(buyerId)) {
+      return res.status(400).json({ message: 'Invalid buyer ID format' });
+    }
 
+    const products = await Product.find({
+      userId: new mongoose.Types.ObjectId(buyerId)
+    });
+
+    console.log(`Found ${products.length} products for user ${buyerId}`);
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching user products:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 // Delete product
 router.delete('/:productId', productController.deleteProduct);

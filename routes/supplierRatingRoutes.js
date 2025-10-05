@@ -6,7 +6,7 @@ const SupplierRating = require('../models/SupplierRating');
 const Supplier = require('../models/Supplier');
 const Buyer = require('../models/Buyer');
 
-// --- Get all ratings for a supplier ---
+//  Get all ratings for a supplier 
 router.get('/supplier/:supplierId', async (req, res) => {
   try {
     const { supplierId } = req.params;

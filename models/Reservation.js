@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Define the Reservation schema 
 const reservationSchema = new mongoose.Schema({
   // Personal Information
   name: {
@@ -92,11 +93,11 @@ const reservationSchema = new mongoose.Schema({
     }
   },
 
-  // Relations - Compatible with your existing User models
+  // Relations , links to other models
   supplier: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Supplier',
-    required: [true, 'Supplier is required']
+    required: false // can be null for public reservations
   },
   buyer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -215,6 +216,7 @@ reservationSchema.statics.getBuyerReservations = function(buyerId) {
 };
 
 // Instance methods
+// updates reservation status and supplier response
 reservationSchema.methods.updateStatus = function(newStatus, supplierMessage = null) {
   this.status = newStatus;
   this.updatedAt = Date.now();
